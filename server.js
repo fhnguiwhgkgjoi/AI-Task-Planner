@@ -15,11 +15,8 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from the current directory
-app.use(express.static(__dirname));
-
 // ============================================
-// API PROXY ENDPOINT
+// API PROXY ENDPOINT (Must be BEFORE static files)
 // ============================================
 app.post('/api/chat', async (req, res) => {
     try {
@@ -104,6 +101,9 @@ app.post('/api/chat', async (req, res) => {
         });
     }
 });
+
+// Serve static files from the current directory (After API routes)
+app.use(express.static(__dirname));
 
 // ============================================
 // START SERVER
