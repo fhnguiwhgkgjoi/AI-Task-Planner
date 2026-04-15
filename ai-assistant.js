@@ -35,15 +35,49 @@ class HuggingFaceService {
         this.validateConfig();
 
         try {
-            // Call backend server instead of Hugging Face API directly (avoids CORS issues)
-            const response = await this.fetchWithTimeout('/api/chat', {
+            // First, try calling the local backend
+            try {
+                const response = await this.fetchWithTimeout('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        history: conversationHistory
+                    })
+                }, 10000); // Shorter timeout for local server
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.response) {
+                        return data.response;
+                    }
+                }
+            } catch (localError) {
+                console.log('📡 Local backend not available, trying direct API call...');
+            }
+
+            // Fallback: Call Hugging Face API directly
+            console.log('🌐 Calling Hugging Face API directly...');
+            
+            const fullPrompt = conversationHistory 
+                ? `${conversationHistory}\nUser: ${prompt}\nAssistant:` 
+                : prompt;
+
+            const response = await this.fetchWithTimeout('https://api-inference.huggingface.co/models/gpt2', {
                 method: 'POST',
                 headers: {
+                    'Authorization': `Bearer ${this.apiKey}`,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    prompt: prompt,
-                    history: conversationHistory
+                    inputs: fullPrompt,
+                    parameters: {
+                        max_new_tokens: 100,
+                        temperature: 0.7,
+                        do_sample: true
+                    }
                 })
             }, this.timeout);
 
@@ -51,20 +85,24 @@ class HuggingFaceService {
                 const errorData = await response.json().catch(() => ({}));
                 
                 if (response.status === 401) {
-                    throw new Error('❌ Invalid API Key. Please check your Hugging Face API key.');
+                    throw new Error('❌ Invalid API Key');
                 } else if (response.status === 429) {
-                    throw new Error('⏳ Rate limited. Please wait a moment and try again.');
+                    throw new Error('⏳ Rate limited. Please wait.');
                 }
-                throw new Error(`API Error: ${response.status} - ${errorData.error || response.statusText}`);
+                throw new Error(`API Error: ${response.status}`);
             }
 
             const data = await response.json();
             
-            if (data.response) {
-                return data.response;
+            if (Array.isArray(data) && data[0]?.generated_text) {
+                let text = data[0].generated_text.trim();
+                text = text.replace(/User:|Assistant:/g, '').trim();
+                text = text.substring(0, 500);
+                return text || 'I understand. How can I help?';
             }
+            
+            throw new Error('Invalid response format');
 
-            throw new Error('Invalid response format from API');
         } catch (error) {
             console.error('API Error:', error);
             throw error;
@@ -282,8 +320,58 @@ class ConversationManager {
                 emotionType: emotion.emotion
             };
         } catch (error) {
-            throw error;
+            console.log('⚠️ AI API failed, using demo mode responses...');
+            
+            // Fallback: Generate intelligent response from intent/emotion
+            const demoResponse = this.generateDemoResponse(userInput, intent, emotion);
+            this.addMessage(demoResponse, 'assistant');
+
+            return {
+                response: demoResponse,
+                intent: intent.intent,
+                emotion: emotion.emoji,
+                emotionType: emotion.emotion
+            };
         }
+    }
+
+    generateDemoResponse(userInput, intent, emotion) {
+        const responses = {
+            task_planning: [
+                "That's great! Let's break this down into smaller, manageable tasks. What's your first step?",
+                "I can help you organize that. Try creating a prioritized list - what matters most?",
+                "Good thinking! Schedule specific time blocks for this. What's your deadline?",
+                "Let's identify the main components. What are the key milestones?"
+            ],
+            emotional_support: [
+                "I hear you. It sounds like you're going through a lot right now. What would help the most?",
+                "It's completely normal to feel this way. What do you need right now?",
+                "Your feelings are valid. Let's focus on what you can control.",
+                "I'm here for you. What do you want to talk about?"
+            ],
+            productivity: [
+                "Nice! Let's boost your focus. Try breaking work into 25-minute chunks.",
+                "Energy management is key. When do you usually have the most energy?",
+                "Motivation often comes from momentum. Start with the smallest task first.",
+                "Let's identify your biggest blocker. What's stopping you?"
+            ],
+            learning: [
+                "Great question! Let me explain this step by step...",
+                "That's an intresting topic.  Want to dive deeper?",
+                "Understanding that requires knowing the basics first. Ready to learn?",
+                "Excellent! This connects to several related concepts. Which interests you most?"
+            ],
+            general: [
+                "I'm doing well, thank you for asking! How can I assist you today?",
+                "Always here to help! What's on your mind?",
+                "Happy to chat! What would you like to know?",
+                "Great to see you! What can I do for you?"
+            ]
+        };
+
+        const responseList = responses[intent.intent] || responses.general;
+        const randomIndex = Math.floor(Math.random() * responseList.length);
+        return responseList[randomIndex];
     }
 
     buildContextPrompt(userInput, intent, emotion) {
