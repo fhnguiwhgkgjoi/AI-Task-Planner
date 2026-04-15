@@ -6,25 +6,46 @@
 
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 
 const app = express();
 const PORT = 3000;
 
-// Middleware
-app.use(cors());
+// ============================================
+// MIDDLEWARE (Order matters!)
+// ============================================
+// Enable CORS for all routes
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type']
+}));
+
+// Parse JSON bodies
 app.use(express.json());
 
 // ============================================
-// API PROXY ENDPOINT (Must be BEFORE static files)
+// HEALTH CHECK ENDPOINT
 // ============================================
+app.get('/health', (req, res) => {
+    res.json({ status: 'OK', message: 'Server is running' });
+});
+
+// ============================================
+// API PROXY ENDPOINT - HANDLES BOTH POST and OPTIONS
+// ============================================
+app.options('/api/chat', cors()); // Handle preflight requests
+
 app.post('/api/chat', async (req, res) => {
     try {
+        console.log('📨 Received request:', req.body);
+        
         const { prompt, history } = req.body;
 
         if (!prompt) {
             return res.status(400).json({ error: 'Prompt is required' });
         }
+
+        console.log('📤 Sending to Hugging Face...');
 
         // Build full prompt with history
         const fullPrompt = history 
@@ -51,27 +72,26 @@ app.post('/api/chat', async (req, res) => {
         });
 
         if (!response.ok) {
+            console.error(`❌ Hugging Face API error: ${response.status}`);
             const errorData = await response.json().catch(() => ({}));
             
             if (response.status === 401) {
                 return res.status(401).json({ 
-                    error: 'Invalid API Key',
-                    details: errorData
+                    error: 'Invalid API Key'
                 });
             } else if (response.status === 429) {
                 return res.status(429).json({ 
-                    error: 'Rate limited',
-                    details: errorData
+                    error: 'Rate limited. Please wait a moment.'
                 });
             }
             
             return res.status(response.status).json({ 
-                error: `API Error: ${response.status}`,
-                details: errorData
+                error: `API Error: ${response.status}`
             });
         }
 
         const data = await response.json();
+        console.log('✅ Response received from Hugging Face');
 
         // Extract generated text
         if (Array.isArray(data) && data.length > 0 && data[0].generated_text) {
@@ -85,6 +105,7 @@ app.post('/api/chat', async (req, res) => {
             const sentences = text.match(/[^.!?]*[.!?]+/g) || [text];
             const cleanedText = sentences.slice(0, 3).join(' ').trim();
 
+            console.log('📤 Sending response to client');
             return res.json({ 
                 response: cleanedText || 'I understand. How can I help you further?'
             });
@@ -95,14 +116,15 @@ app.post('/api/chat', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Server Error:', error);
+        console.error('❌ Server Error:', error.message);
         return res.status(500).json({ 
             error: error.message || 'Internal server error'
         });
     }
 });
 
-// Serve static files from the current directory (After API routes)
+// Serve static files (HTML, CSS, JS) from current directory
+// This MUST be AFTER the API routes
 app.use(express.static(__dirname));
 
 // ============================================
@@ -114,13 +136,11 @@ app.listen(PORT, () => {
 ║   🤖 AI ASSISTANT SERVER RUNNING       ║
 ╚════════════════════════════════════════╝
 
-📍 Server: http://localhost:${PORT}
-📁 Static files: ${__dirname}
+📍 Access URL: http://localhost:${PORT}
+📁 Serving files from: ${__dirname}
 
-✅ Open http://localhost:${PORT} in your browser
-
-📝 API Endpoint: POST http://localhost:${PORT}/api/chat
-   Body: { "prompt": "your message", "history": "optional conversation history" }
+✅ API Endpoint: POST http://localhost:${PORT}/api/chat
+✅ Health Check: GET http://localhost:${PORT}/health
 
 🛑 Press Ctrl+C to stop the server
     `);
