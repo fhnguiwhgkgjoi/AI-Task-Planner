@@ -46,21 +46,6 @@
     </div>
 
     <script src="ai-assistant.js">
-        async function askAI() {
-  const res = await fetch("https://api-inference.huggingface.co/models/gpt2", {
-    method: "POST",
-    headers: {
-      "Authorization": "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",
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      inputs: "Hello AI"
-    })
-  });
-
-  const data = await res.json();
-  console.log(data);
-}
     </script>
 </body>
 </html>
