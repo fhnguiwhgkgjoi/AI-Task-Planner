@@ -27,7 +27,7 @@ class HuggingFaceService {
 
     validateConfig() {
         if (this.apiKey === 'YOUR_HUGGING_FACE_API_KEY_HERE' || !this.apiKey) {
-            throw new Error('⚠️ API Key not configured! Please set your Hugging Face API key in AI_CONFIG.API_KEY');
+            throw new Error('⚠️ Oops! API key not set pa. Set mo ang key mo sa AI_CONFIG.API_KEY, okay?');
         }
     }
 
@@ -98,7 +98,7 @@ class HuggingFaceService {
                 let text = data[0].generated_text.trim();
                 text = text.replace(/User:|Assistant:/g, '').trim();
                 text = text.substring(0, 500);
-                return text || 'I understand. How can I help?';
+                return text || 'Naintindihan ko yan. What else is on your mind?';
             }
             
             throw new Error('Invalid response format');
@@ -120,7 +120,7 @@ class HuggingFaceService {
         const sentences = text.match(/[^.!?]*[.!?]+/g) || [text];
         const response = sentences.slice(0, 3).join(' ').trim();
         
-        return response || 'I understand. How can I help you further?';
+        return response || 'Got it. Anything else? Tell me lang what else is on your mind 😊';
     }
 
     async fetchWithTimeout(url, options, timeoutMs) {
@@ -151,24 +151,24 @@ class IntentDetector {
     constructor() {
         this.intents = {
             task_planning: {
-                keywords: ['plan', 'organize', 'schedule', 'deadline', 'project', 'task', 'organize', 'break down'],
-                response: 'This sounds like a planning challenge. '
+                keywords: ['plan', 'organize', 'schedule', 'deadline', 'project', 'task', 'organize', 'break down', 'submit', 'deadline', 'plano', 'organize', 'schedule', 'tasks'],
+                response: 'Okay, let me help you organize yan! '
             },
             emotional_support: {
-                keywords: ['feel', 'sad', 'happy', 'stressed', 'anxious', 'tired', 'overwhelmed', 'frustrated', 'emotion'],
-                response: 'I hear you. '
+                keywords: ['feel', 'sad', 'happy', 'stressed', 'anxious', 'tired', 'overwhelmed', 'frustrated', 'emotion', 'stressed', 'anxious', 'overwhelmed', 'hindi ko kaya', 'nakakapagod', 'down', 'malungkot'],
+                response: 'Ay, nakikita ko yan. '
             },
             productivity: {
-                keywords: ['focus', 'concentrate', 'distracted', 'procrastinate', 'lazy', 'motivation', 'energy'],
-                response: 'Let\'s work on your productivity. '
+                keywords: ['focus', 'concentrate', 'distracted', 'procrastinate', 'lazy', 'motivation', 'energy', 'focus', 'productive', 'concentrate', 'hindi makafocus', 'tamad', 'walang motivation'],
+                response: 'Let\'s get you productive! '
             },
             learning: {
-                keywords: ['learn', 'study', 'understand', 'explain', 'how to', 'teach', 'course', 'education'],
-                response: 'Great question. '
+                keywords: ['learn', 'study', 'understand', 'explain', 'how to', 'teach', 'course', 'education', 'aral', 'study', 'maintindihan'],
+                response: 'Maganda question yan! '
             },
             general: {
-                keywords: ['hello', 'hi', 'how are you', 'help', 'what'],
-                response: 'I\'m here to help. '
+                keywords: ['hello', 'hi', 'how are you', 'help', 'what', 'hey', 'sup', 'kumusta'],
+                response: 'Hey! '
             }
         };
     }
@@ -207,29 +207,34 @@ class EmotionDetector {
     constructor() {
         this.emotions = {
             stressed: {
-                keywords: ['stressed', 'anxious', 'panic', 'worry', 'nervous', 'pressure'],
+                keywords: ['stressed', 'anxious', 'panic', 'worry', 'nervous', 'pressure', 'stress', 'nerstress', 'anxious', 'walang peace of mind', 'kailan ko tatapusin'],
                 emoji: '😰',
                 color: '#ff6b6b'
             },
             overwhelmed: {
-                keywords: ['overwhelmed', 'too much', 'can\'t handle', 'drowning', 'chaos'],
+                keywords: ['overwhelmed', 'too much', 'can\'t handle', 'drowning', 'chaos', 'overwhelmed', 'sobrang dami', 'hindi ko kaya', 'talo ako'],
                 emoji: '😵',
                 color: '#ff8c42'
             },
             tired: {
-                keywords: ['tired', 'exhausted', 'fatigue', 'sleep', 'drained', 'sleepy'],
+                keywords: ['tired', 'exhausted', 'fatigue', 'sleep', 'drained', 'sleepy', 'pagod', 'nakakapagod', 'dead', 'walang energy'],
                 emoji: '😴',
                 color: '#95a5a6'
             },
             happy: {
-                keywords: ['happy', 'excited', 'great', 'awesome', 'love', 'wonderful'],
+                keywords: ['happy', 'excited', 'great', 'awesome', 'love', 'wonderful', 'masaya', 'excited', 'super', 'ganda'],
                 emoji: '😊',
                 color: '#f39c12'
             },
             sad: {
-                keywords: ['sad', 'depressed', 'down', 'unhappy', 'miserable'],
+                keywords: ['sad', 'depressed', 'down', 'unhappy', 'miserable', 'sad', 'malungkot', 'down', 'heartbroken', 'broken'],
                 emoji: '😢',
                 color: '#3498db'
+            },
+            frustrated: {
+                keywords: ['frustrated', 'angry', 'irritated', 'annoyed', 'fed up', 'frustrated', 'nakakirot', 'galit', 'nag-iwan', 'nag-give up'],
+                emoji: '😤',
+                color: '#e74c3c'
             }
         };
     }
@@ -338,34 +343,34 @@ class ConversationManager {
     generateDemoResponse(userInput, intent, emotion) {
         const responses = {
             task_planning: [
-                "That's great! Let's break this down into smaller, manageable tasks. What's your first step?",
-                "I can help you organize that. Try creating a prioritized list - what matters most?",
-                "Good thinking! Schedule specific time blocks for this. What's your deadline?",
-                "Let's identify the main components. What are the key milestones?"
+                "Ay, okay lang yan! Gawin nating simple lang - break it down into smaller chunks na kaya mo. Anong first step mo?",
+                "Sige, pwede ko i-organize yan para sa'yo. Ano ba ang most important part? Prioritize natin 'yun.",
+                "Nice, nice! Kailangan mo talagang mag-set ng timeline. Kailan mo dapat tapos 'yan?",
+                "Oo naman! Let me help you map this out - what are the main components? Sabihin mo lang."
             ],
             emotional_support: [
-                "I hear you. It sounds like you're going through a lot right now. What would help the most?",
-                "It's completely normal to feel this way. What do you need right now?",
-                "Your feelings are valid. Let's focus on what you can control.",
-                "I'm here for you. What do you want to talk about?"
+                "Yaya, nakikita ko yan. Heavy talaga 'yan, di ba? What do you need right now? Talk to me.",
+                "Ayaw mo mag-alala - normal lang yan, karamihan namin nararanasan yan. Ano ang kailangan mo?",
+                "Totoo yan feelings mo, walang problema dyan. Focus tayo sa mga kaya nating gawin, okay?",
+                "Nandito ako para sa'yo, bestie. Sabi mo lang kung ano ang nasa isip mo."
             ],
             productivity: [
-                "Nice! Let's boost your focus. Try breaking work into 25-minute chunks.",
-                "Energy management is key. When do you usually have the most energy?",
-                "Motivation often comes from momentum. Start with the smallest task first.",
-                "Let's identify your biggest blocker. What's stopping you?"
+                "Gaya-gaya! Let's get you focused. Try mo mag-work in 25-minute bursts lang - Pomodoro style. Works like magic, swear.",
+                "Energy management ang key dito, bro. Kailan ka usually ma-productive? Morning person ka ba?",
+                "Real talk - ang momentum lang ang kailangan mo. Start with smallest task, then snowball nalang.",
+                "What's your biggest blocker ngayon? Let's tackle that first, then rolling na tayo."
             ],
             learning: [
-                "Great question! Let me explain this step by step...",
-                "That's an intresting topic.  Want to dive deeper?",
-                "Understanding that requires knowing the basics first. Ready to learn?",
-                "Excellent! This connects to several related concepts. Which interests you most?"
+                "Ayy, maganda ang tanong! Let me break it down para sa'yo step by step, okay?",
+                "Ooh, interesting topic 'yan talaga! Gusto mo ng deep dive, or surface level lang?",
+                "You know what, kailangan muna natin malaman ang basics. Ready ka ba? Let's go.",
+                "Solid question yan! Maraming related concepts dyan. Which part interests you most?"
             ],
             general: [
-                "I'm doing well, thank you for asking! How can I assist you today?",
-                "Always here to help! What's on your mind?",
-                "Happy to chat! What would you like to know?",
-                "Great to see you! What can I do for you?"
+                "Ayy, halo ako! Nandito ako para sa'yo. What's going on sa head mo right now?",
+                "Yo! Always ready to listen. Ano ba ang nasa isip mo?",
+                "Hey! Meron ka ba problema or just wanna chat? Tell me lang.",
+                "Ey, sup! What can I do for you ngayon? Say mo lang."
             ]
         };
 
@@ -376,14 +381,14 @@ class ConversationManager {
 
     buildContextPrompt(userInput, intent, emotion) {
         const intentContext = {
-            task_planning: 'Help organize tasks and create action plans.',
-            emotional_support: 'Provide empathetic and supportive responses.',
-            productivity: 'Give tips and strategies to improve focus and productivity.',
-            learning: 'Explain concepts clearly and help with learning.',
-            general: 'Be helpful and conversational.'
+            task_planning: 'Help organize tasks and create action plans. Be casual, friendly, use natural Filipino-English mix (Taglish). Give practical advice.',
+            emotional_support: 'Provide empathetic and supportive responses. Be like a good friend - understanding, real, no corporate talk.',
+            productivity: 'Give tips and strategies to improve focus and productivity. Be encouraging but realistic. Use conversational Taglish.',
+            learning: 'Explain concepts clearly and help with learning. Make it relatable and not boring. Be like a friend explaining something, not a textbook.',
+            general: 'Be helpful and conversational. Talk like a real person - friendly, understanding, maybe use some Taglish. Ask follow-up questions sometimes.'
         };
 
-        return `You are a helpful, empathetic AI assistant. ${intentContext[intent.intent] || intentContext.general}
+        return `You are a helpful, friendly AI assistant that speaks like a real person. You use natural Taglish (Filipino-English mix) in a conversational way - not robotic or formal. ${intentContext[intent.intent] || intentContext.general} Be genuine, sometimes ask follow-up questions to understand better.
 
 User: ${userInput}
 Assistant:`;
@@ -577,7 +582,7 @@ class AIAssistant {
 
         // Check API key
         if (API_CONFIG.API_KEY === 'YOUR_HUGGING_FACE_API_KEY_HERE') {
-            this.uiController.showError('⚠️ API Key not configured. Please set API_CONFIG.API_KEY with your Hugging Face API key. Get one free at https://huggingface.co/settings/tokens');
+            this.uiController.showError('⚠️ Oops! May setup pa - kindly set up your Hugging Face API key sa AI_CONFIG.API_KEY. Get one for free dito: https://huggingface.co/settings/tokens. Easy lang!');
         }
 
         console.log('✅ AI Assistant initialized');
@@ -638,9 +643,9 @@ class AIAssistant {
             
             let errorMessage = error.message;
             if (error.message.includes('Invalid API Key')) {
-                errorMessage = '❌ Invalid API Key. Please check your Hugging Face API key.';
+                errorMessage = '❌ Oops, may problema sa API key. Check mo lang kung correct ang key mo, okay?';
             } else if (error.message.includes('timeout')) {
-                errorMessage = '⏳ Request timed out. Please try again.';
+                errorMessage = '⏳ Taking a bit too long - try again lang, bro.';
             }
 
             this.uiController.showError(errorMessage);
