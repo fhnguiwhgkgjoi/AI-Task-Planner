@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0e27">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>AI Task Planner</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="chat-container">
+        <!-- HEADER -->
+        <header class="chat-header">
+            <div class="header-content">
+                <h1>🤖 AI Task Planner</h1>
+                <p>Transform your emotions into action</p>
+            </div>
+            <div class="emotion-indicator" id="emotionIndicator"></div>
+        </header>
+
+        <!-- CHAT AREA -->
+        <div class="chat-area">
+            <div class="messages-container" id="messagesContainer">
+                <div class="message bot-message">
+                    <div class="message-content">
+                        <p>Hi there! 👋 I'm your AI planning assistant. What's on your mind today? Tell me how you're feeling—no judgment, just real talk.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INPUT AREA -->
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea 
+                    id="userThought" 
+                    class="chat-input"
+                    placeholder="Tell me what's bothering you... (e.g., 'I'm so overwhelmed' or 'I can't focus on studying')"
+                    rows="1"
+                ></textarea>
+                <button id="generateBtn" class="send-btn">→</button>
+            </div>
+            <p class="hint">Press Ctrl+Enter or click → to send</p>
+        </div>
+    </div>
+
+    <script src="ai-assistant.js"></script>
+</body>
+</html>
